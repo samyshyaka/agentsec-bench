@@ -42,9 +42,8 @@ Working prototype. Currently supports:
 - Broader scenario coverage
 
 ## Running it
-
     uv sync
-    uv run python run_test.py        # run all scenarios
-    uv run python check_scenarios.py  # validate ground truth
-    uv run pytest -v                  # run test suite
-    uv run python generate_report.py  # produce report.html
+    uv run python scripts/run_test.py        # run all scenarios
+    uv run python scripts/check_scenarios.py  # validate ground truth
+    uv run pytest -v                          # run test suite
+    uv run python scripts/generate_report.py  # produce report.html
