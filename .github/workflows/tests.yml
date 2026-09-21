@@ -38,6 +38,6 @@ jobs:
         working-directory: agentsec-bench
         run: uv run pytest -v
 
-      - name: Run scenario validation
+            - name: Run scenario validation
         working-directory: agentsec-bench
-        run: uv run python check_scenarios.py
+        run: uv run python scripts/check_scenarios.py
