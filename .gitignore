@@ -14,3 +14,4 @@ __pycache__/
 .venv/
 results.json
 report.html
+comparison_plan.json
