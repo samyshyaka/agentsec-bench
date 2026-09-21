@@ -47,3 +47,32 @@ Working prototype. Currently supports:
     uv run python scripts/check_scenarios.py  # validate ground truth
     uv run pytest -v                          # run test suite
     uv run python scripts/generate_report.py  # produce report.html
+
+
+
+## Reproducibility
+
+Prerequisites: Python 3.12 (see `.python-version`) and [uv](https://docs.astral.sh/uv/) for
+dependency management. No API keys or external services are required for the current
+scripted-agent scenarios — everything runs locally and deterministically.
+
+Setup:
+
+    git clone <repo-url>
+    cd agentsec-bench
+    uv sync
+
+This installs the exact dependency versions pinned in `uv.lock`, so results should be
+identical across machines. All scenario agents are scripted (not live LLM calls), so
+`scripts/run_test.py` produces the same `results.json` output on every run.
+
+Alternative: a `Dockerfile` is included for running the benchmark in a container
+without installing Python/uv locally:
+
+    docker build -t agentsec-bench .
+    docker run --rm agentsec-bench
+
+Note: the Dockerfile has been updated to match the current `scripts/` layout but has
+not yet been build-tested end-to-end on this machine (local Docker install was
+blocked by a Windows Update servicing error). Worth a real build/run pass in CI or
+on another machine before relying on it.
