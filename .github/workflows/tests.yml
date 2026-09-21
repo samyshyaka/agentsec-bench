@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
     branches: [main]
 
@@ -38,6 +38,6 @@ jobs:
         working-directory: agentsec-bench
         run: uv run pytest -v
 
-            - name: Run scenario validation
+      - name: Run scenario validation
         working-directory: agentsec-bench
         run: uv run python scripts/check_scenarios.py
