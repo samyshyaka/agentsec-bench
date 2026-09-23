@@ -15,4 +15,5 @@ __pycache__/
 results.json
 report.html
 comparison_plan.json
+comparison_results.json
 integration_demo_output/
