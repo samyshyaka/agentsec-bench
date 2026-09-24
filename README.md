@@ -9,7 +9,7 @@ tool misuse, privilege escalation, and data exfiltration.
 Working prototype. Currently supports:
 
 - Core Scenario / Agent / Tool / Evaluator interfaces
--  9 scenarios across 4 threat patterns::
+- 9 scenarios across 4 threat patterns:
   - Unauthorized tool invocation (payment approval, refund authorization, privilege escalation)
   - Prompt injection (hidden instructions in retrieved content)
   - Data exfiltration (sensitive data sent to unauthorized destinations)
@@ -19,32 +19,73 @@ Working prototype. Currently supports:
 - 26 automated tests (ground-truth validation + agent behavior checks)
 - JSON results export with OWASP control mapping
 - HTML report generation
+- Docker-based reproducibility (Dockerfile provided; not yet build-tested end-to-end on this machine, see Reproducibility section below)
+- Baseline comparison harness against AgentDojo - the comparison plan (which scenarios map to AgentDojo tasks, which test threat categories AgentDojo doesn't cover) runs with no API keys needed. Live execution against real OpenAI and Anthropic agents is fully implemented and has been tested end-to-end against both real APIs (confirmed working - requests are sent and responses/errors are handled correctly). Producing actual comparison results is blocked only on funded API credits, not on any remaining code work.
+- End-to-end integration demo (`scripts/integration_demo.py`) tying together all 6 Open Agent Security Initiative projects in one run: AgentSec-Bench evaluates all 9 scenarios, AgentTrace analyzes every resulting trace, AgentGuard blocks the 4 attack patterns it has policies for before execution, AgentSec-Scorecard scores the run, and AgentSec-Crosswalk reports OWASP ASI / NIST AI RMF coverage gaps.
 
 ## Project layout
 
-- `agentsec_bench/core/` — the Scenario, Agent, Tool, and Evaluator base interfaces everything else builds on.
-- `agentsec_bench/scenarios/` — the scenario definitions (the attack/misuse cases being tested).
-- `agentsec_bench/tools/` — the mock tools scenarios use (expense, refund, inbox, CRM, admin, devops, workspace, vendor, reporting).
-- `agentsec_bench/agents/` — the agent implementations under test, including the scripted stand-ins and the LLM-backed agents (`llm_agent.py`, `llm_agent_anthropic.py`).
-- `tests/` — the automated test suite (ground-truth validation + agent behavior checks).
-- `run_test.py` — runs all scenarios end-to-end.
-- `check_scenarios.py` — validates scenario ground truth.
-- `generate_report.py` — produces the HTML report.
-- `run_comparison.py` / `comparison_config.py` — baseline comparison harness (e.g. against AgentDojo).
-- `guard_integration_demo.py` — demonstrates AgentGuard blocking a call at runtime that AgentSec-Bench detects after the fact.
+- `agentsec_bench/core/` - the Scenario, Agent, Tool, and Evaluator base interfaces everything else builds on.
+- `agentsec_bench/scenarios/` - the scenario definitions (the attack/misuse cases being tested).
+- `agentsec_bench/tools/` - the mock tools scenarios use (expense, refund, inbox, CRM, admin, devops, workspace, vendor, reporting).
+- `agentsec_bench/agents/` - the agent implementations under test, including the scripted stand-ins and the LLM-backed agents (`llm_agent.py`, `llm_agent_anthropic.py`).
+- `tests/` - the automated test suite (ground-truth validation + agent behavior checks).
+- `run_test.py` - runs all scenarios end-to-end.
+- `check_scenarios.py` - validates scenario ground truth.
+- `generate_report.py` - produces the HTML report.
+- `run_comparison.py` / `comparison_config.py` - baseline comparison harness (builds the AgentDojo comparison plan, and runs live agents against all 9 scenarios once funded API keys are available).
+- `guard_integration_demo.py` - demonstrates AgentGuard blocking a call at runtime that AgentSec-Bench detects after the fact, for 4 of the 9 scenarios.
+- `integration_demo.py` - end-to-end demo across all 6 Open Agent Security Initiative projects (Bench, Trace, Guard, Scorecard, Crosswalk) in a single run; writes its own output under `integration_demo_output/` so it never touches any repo's real tracked results/history files.
+
+## Known detection gaps
+
+Running `integration_demo.py` surfaces a real, currently-unaddressed gap:
+`HT-001` (human/agent trust exploitation) is the one scenario, of the 9, where a
+successful attack is caught by neither of AgentSec-Bench's own detection
+mechanisms (role-based or destination-based) nor by AgentTrace's
+`SequenceAnalyzer`. It shows up as a `0.0/100` category score in the
+Scorecard summary. This is a genuine coverage gap, not a bug in the demo -
+worth prioritizing if further detection work is scoped for this threat
+category.
 
 ## Not yet done
 
-- Live LLM agent evaluation (OpenAI and Anthropic integrations are built,
-  pending account funding)
-- Baseline comparison against AgentDojo
-- Docker-based reproducibility
+- Live baseline comparison results against AgentDojo (harness built and tested end-to-end against real OpenAI/Anthropic APIs; blocked only on funded API credits, not on code)
+- Detection coverage for `HT-001` (human/agent trust exploitation) - see "Known detection gaps" above
 - Broader scenario coverage
 
 ## Running it
-
     uv sync
-    uv run python run_test.py        # run all scenarios
-    uv run python check_scenarios.py  # validate ground truth
-    uv run pytest -v                  # run test suite
-    uv run python generate_report.py  # produce report.html
+    uv run python scripts/run_test.py            # run all scenarios
+    uv run python scripts/check_scenarios.py      # validate ground truth
+    uv run pytest -v                              # run test suite
+    uv run python scripts/generate_report.py      # produce report.html
+    uv run python scripts/run_comparison.py       # build AgentDojo comparison plan; runs live comparison too if API credits are available
+    uv run python scripts/integration_demo.py     # end-to-end demo across all 6 Open Agent Security Initiative projects
+
+## Reproducibility
+
+Prerequisites: Python 3.12 (see `.python-version`) and [uv](https://docs.astral.sh/uv/) for
+dependency management. No API keys or external services are required for the current
+scripted-agent scenarios - everything runs locally and deterministically.
+
+Setup:
+
+    git clone <repo-url>
+    cd agentsec-bench
+    uv sync
+
+This installs the exact dependency versions pinned in `uv.lock`, so results should be
+identical across machines. All scenario agents are scripted (not live LLM calls), so
+`scripts/run_test.py` produces the same `results.json` output on every run.
+
+Alternative: a `Dockerfile` is included for running the benchmark in a container
+without installing Python/uv locally:
+
+    docker build -t agentsec-bench .
+    docker run --rm agentsec-bench
+
+Note: the Dockerfile has been updated to match the current `scripts/` layout but has
+not yet been build-tested end-to-end on this machine (local Docker install was
+blocked by a Windows Update servicing error). Worth a real build/run pass in CI or
+on another machine before relying on it.

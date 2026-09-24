@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "agentguard",
+    "agentsec-crosswalk",
+    "agentsec-scorecard",
     "agenttrace",
     "anthropic>=1.5.0",
     "openai>=3.14.0",
@@ -25,6 +27,8 @@ module-root = ""
 [tool.uv.sources]
 agentguard = { path = "../agentguard", editable = true }
 agenttrace = { path = "../AgentTrace", editable = true }
+agentsec-scorecard = { path = "../agentsec-scorecard", editable = true }
+agentsec-crosswalk = { path = "../agentsec-crosswalk", editable = true }
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
