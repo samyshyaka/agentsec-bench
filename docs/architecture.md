@@ -1,5 +1,26 @@
 # Architecture
 
+```mermaid
+flowchart TD
+    subgraph Bench["AgentSec-Bench (this repo)"]
+        Scenario["Scenario<br/>id, threat_category, prompt,<br/>owasp_control_id, ground_truth(), evaluate()"]
+        AgentIF["Agent<br/>query(prompt, tools, env) -&gt; messages, trace"]
+        ToolIF["Tool<br/>name, description, parameters,<br/>permission, run"]
+        Evaluator["Evaluator<br/>run(scenario, agent, env) -&gt; ScenarioResult"]
+        AgentIF -->|"trace: list[ToolCall]"| Evaluator
+        Scenario -->|evaluate trace| Evaluator
+        ToolIF -.->|declares permission| Evaluator
+    end
+
+    Evaluator -->|ScenarioResult| Trace["AgentTrace<br/>SequenceAnalyzer<br/>independent trace analysis"]
+    Evaluator -->|"ToolCall trace"| Guard["AgentGuard<br/>check() / check_outcome()<br/>pre-execution + outcome checks"]
+    Trace --> Scorecard["AgentSec-Scorecard<br/>overall + per-category score"]
+    Guard --> Scorecard
+    Evaluator -->|"threat_category, owasp_control_id"| Crosswalk["AgentSec-Crosswalk<br/>OWASP ASI / NIST AI RMF mapping<br/>+ coverage gap report"]
+```
+
+*Renders as a diagram natively in GitHub's markdown viewer. Source: this file.*
+
 AgentSec-Bench is built around four core interfaces, defined in `agentsec_bench/core/`:
 
 - **Scenario** - a single attack/misuse case. Declares `id`, `threat_category`,
