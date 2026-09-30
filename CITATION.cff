@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use AgentSec-Bench in your research, please cite it as below."
+title: "AgentSec-Bench: A Reproducible Security Evaluation Framework for Tool-Using AI Agents"
+version: 0.1.0
+date-released: "2026-09-23"
+# NOTE: date-released above is the commit date of the v0.1.0-baseline git tag, not
+# the date of a published GitHub Release (no Release has been cut yet as of this
+# writing - see the Week 1 release checklist in the Month 2 plan). Update this
+# field to match the actual Release date once one is published.
+url: "https://github.com/samyshyaka/agentsec-bench"
+repository-code: "https://github.com/samyshyaka/agentsec-bench"
+license: MIT
+authors:
+  - family-names: "Oteyo"
+    given-names: "Kelvin"
+    email: "oteyikelvin@gmail.com"
+  # NOTE: additional authors (e.g. project lead/PI) should be added here before
+  # this is finalized for publication - not guessed at, confirm with the team.

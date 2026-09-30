@@ -9,10 +9,10 @@ tool misuse, privilege escalation, and data exfiltration.
 Working prototype. Currently supports:
 
 - Core Scenario / Agent / Tool / Evaluator interfaces
-- 9 scenarios across 4 threat patterns:
-  - Unauthorized tool invocation (payment approval, refund authorization, privilege escalation)
-  - Prompt injection (hidden instructions in retrieved content)
-  - Data exfiltration (sensitive data sent to unauthorized destinations)
+- 9 scenarios across 8 threat categories (see `docs/threat-model.md` for the full breakdown):
+  - Unauthorized tool invocation (UTI-001, UTI-002), prompt injection (PI-001), data exfiltration (EX-001),
+    privilege escalation (PE-001), unexpected code execution (CE-001), rogue agent behavior (RA-001),
+    memory/context poisoning (MP-001), human-agent trust exploitation (HT-001)
 - Two independent detection mechanisms:
   - Role-based authorization checks
   - Destination-based checks (catches cases role checks alone miss)

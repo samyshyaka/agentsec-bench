@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, staging]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   test:
@@ -26,6 +26,19 @@ jobs:
         with:
           repository: samyshyaka/agenttrace
           path: AgentTrace
+          ref: staging
+
+      - name: Checkout agentsec-crosswalk
+        uses: actions/checkout@v4
+        with:
+          repository: samyshyaka/agentsec-crosswalk
+          path: agentsec-crosswalk
+
+      - name: Checkout agentsec-scorecard
+        uses: actions/checkout@v4
+        with:
+          repository: samyshyaka/agentsec-scorecard
+          path: agentsec-scorecard
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
