@@ -9,4 +9,4 @@ RUN uv sync --frozen
 
 COPY . .
 
-CMD ["uv", "run", "python", "run_test.py"]
+CMD ["uv", "run", "python", "scripts/run_test.py"]

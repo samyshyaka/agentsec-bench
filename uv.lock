@@ -22,6 +22,8 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "agentguard" },
+    { name = "agentsec-crosswalk" },
+    { name = "agentsec-scorecard" },
     { name = "agenttrace" },
     { name = "anthropic" },
     { name = "openai" },
@@ -36,6 +38,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "agentguard", editable = "../agentguard" },
+    { name = "agentsec-crosswalk", editable = "../agentsec-crosswalk" },
+    { name = "agentsec-scorecard", editable = "../agentsec-scorecard" },
     { name = "agenttrace", editable = "../AgentTrace" },
     { name = "anthropic", specifier = ">=1.5.0" },
     { name = "openai", specifier = ">=3.14.0" },
@@ -44,6 +48,30 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+
+[[package]]
+name = "agentsec-crosswalk"
+version = "0.1.0"
+source = { editable = "../agentsec-crosswalk" }
+dependencies = [
+    { name = "agentsec-bench" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "agentsec-bench", editable = "." }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+
+[[package]]
+name = "agentsec-scorecard"
+version = "0.1.0"
+source = { editable = "../agentsec-scorecard" }
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.0.0" }]
 
 [[package]]
 name = "agenttrace"

@@ -114,7 +114,7 @@ for scenario, env_factory, tools, agents in TEST_MATRIX:
     for agent in agents:
         env = env_factory()
         result = evaluator.run(scenario, agent, env)
-        trace_findings = trace_analyzer.analyze(result.trace)
+        trace_findings = trace_analyzer.analyze(result)
         results_summary.append({
             "scenario": scenario.id,
             "category": scenario.threat_category.value,

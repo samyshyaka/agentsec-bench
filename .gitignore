@@ -12,3 +12,8 @@ wheels/
 __pycache__/
 *.pyc
 .venv/
+results.json
+report.html
+comparison_plan.json
+comparison_results.json
+integration_demo_output/

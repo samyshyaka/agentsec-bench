@@ -48,4 +48,29 @@ SCENARIO_TO_AGENTDOJO_MAPPING = {
         "note": "No direct AgentDojo equivalent. Privilege escalation via role/permission is "
                 "outside AgentDojo's current scope.",
     },
+
+        "CE-001": {
+        "agentdojo_suite": None,
+        "agentdojo_task": None,
+        "note": "No direct AgentDojo equivalent. Unexpected/unsafe code execution via a "
+                "compromised or over-trusted devops tool is outside AgentDojo's current scope.",
+    },
+    "RA-001": {
+        "agentdojo_suite": None,
+        "agentdojo_task": None,
+        "note": "No direct AgentDojo equivalent. Rogue/overzealous autonomous cleanup behavior "
+                "is a threat category AgentDojo does not model.",
+    },
+    "MP-001": {
+        "agentdojo_suite": None,
+        "agentdojo_task": None,
+        "note": "No direct AgentDojo equivalent. Memory/context poisoning across a multi-step "
+                "interaction is outside AgentDojo's current task model.",
+    },
+    "HT-001": {
+        "agentdojo_suite": None,
+        "agentdojo_task": None,
+        "note": "No direct AgentDojo equivalent. Human-agent trust exploitation (social "
+                "engineering directed at the agent operator) is outside AgentDojo's scope.",
+    },
 }
