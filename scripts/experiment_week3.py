@@ -1,6 +1,6 @@
 """
 Week 3 (Month 2 Plan): controlled comparison of AgentSec-Bench's 9 scenarios,
-unprotected vs. AgentGuard-enabled.
+unprotected vs. AgentGuard-enabled vs. AgentGuard-with-a-weak-policy.
 
 METHODOLOGY NOTE (read before interpreting results):
 The Month 2 plan specifies 1,000 trials per condition. That number only makes
@@ -16,6 +16,23 @@ the real Evaluator and the real AgentGuard.check()/check_outcome() code -
 "protected" runs are produced by filtering each agent's trace through a real
 AgentGuard instance before the real Evaluator ever sees it, not by
 reimplementing detection logic separately.
+
+NEGATIVE CONTROL (Month 2 plan addendum #2):
+Alongside "unprotected" (no AgentGuard at all) and "AgentGuard" (the real
+policies in GUARD below), this script also runs "weak policy": agents are
+wrapped through the exact same GuardedAgentWrapper/AgentGuard code path as
+the real AgentGuard condition, but against an AgentGuard instance
+constructed with an empty policy list and no outcome rules
+(WEAK_GUARD = AgentGuard(policies=[], outcome_rules=[])). Per AgentGuard's
+own check()/check_outcome() source (agentguard/guard.py): a tool with no
+ToolPolicy registered hits the "no policy defined" branch and is allowed,
+and a tool with no OutcomeConsistencyRule registered hits the "no outcome
+consistency rule defined" branch and is allowed - so WEAK_GUARD blocks
+nothing, by the same logic the real GUARD uses to block things it's
+actually configured to block. If "weak policy" results land close to
+"unprotected", that shows Experiment B's improvement comes from GUARD's
+specific policy content, not from some artifact of routing agents through
+GuardedAgentWrapper at all.
 
 METRIC DEFINITIONS (the plan names these metrics but doesn't define exact
 computation for this codebase - these are explicit, stated choices, not
@@ -100,6 +117,17 @@ GUARD = AgentGuard(
         OutcomeConsistencyRule(tool_name="report_status", field="status"),
     ],
 )
+
+# Negative control (Month 2 plan addendum #2): same AgentGuard class, same
+# GuardedAgentWrapper code path, but zero policies and zero outcome rules
+# registered. Per guard.py's own check()/check_outcome(): a tool with no
+# ToolPolicy is allowed ("no policy defined"), and a tool with no
+# OutcomeConsistencyRule is allowed ("no outcome consistency rule defined").
+# So this guard is real and genuinely exercised, but configured to block
+# nothing - confirming any measured improvement under GUARD comes from
+# GUARD's specific policy content, not from the wrapper itself.
+WEAK_GUARD = AgentGuard(policies=[], outcome_rules=[])
+
 HT001_ACTUAL_STATE = {"status": "failed"}  # confirmed: run_backup_impl is deterministic and always fails
 
 
@@ -152,12 +180,16 @@ SCENARIOS = [
 ]
 
 
-def run_condition(protected: bool):
+def run_condition(guard: "AgentGuard | None"):
+    """guard=None reproduces the original 'unprotected' condition exactly
+    (agents run with no wrapper at all). Any AgentGuard instance (GUARD or
+    WEAK_GUARD) routes agents through the same GuardedAgentWrapper code
+    path used for the real 'protected' condition."""
     attack_rows, utility_rows = [], []
     for scenario, env_factory, tools, bad_agent, good_agent in SCENARIOS:
         evaluator = Evaluator(tools=tools)
-        atk_agent = GuardedAgentWrapper(bad_agent, GUARD) if protected else bad_agent
-        good_agent_wrapped = GuardedAgentWrapper(good_agent, GUARD) if protected else good_agent
+        atk_agent = GuardedAgentWrapper(bad_agent, guard) if guard is not None else bad_agent
+        good_agent_wrapped = GuardedAgentWrapper(good_agent, guard) if guard is not None else good_agent
         atk_result = evaluator.run(scenario, atk_agent, env_factory())
         util_result = evaluator.run(scenario, good_agent_wrapped, env_factory())
         attack_rows.append({
@@ -191,35 +223,40 @@ def compute_metrics(attack_rows, utility_rows):
 
 
 def main():
-    unprotected_attack, unprotected_utility = run_condition(protected=False)
-    protected_attack, protected_utility = run_condition(protected=True)
+    unprotected_attack, unprotected_utility = run_condition(guard=None)
+    protected_attack, protected_utility = run_condition(guard=GUARD)
+    weak_attack, weak_utility = run_condition(guard=WEAK_GUARD)
 
     unprotected_metrics = compute_metrics(unprotected_attack, unprotected_utility)
     protected_metrics = compute_metrics(protected_attack, protected_utility)
+    weak_metrics = compute_metrics(weak_attack, weak_utility)
 
     print(f"N = {len(SCENARIOS)} scenarios (see module docstring - not the plan's 1,000-trial design)\n")
-    print(f"{'Metric':<32} {'Unprotected':<14} {'AgentGuard':<14} Change")
-    print("-" * 80)
+    print(f"{'Metric':<32} {'Unprotected':<14} {'Weak Policy':<14} {'AgentGuard':<14} Change (AG vs Unprotected)")
+    print("-" * 100)
     for key in unprotected_metrics:
         u = unprotected_metrics[key]
+        w = weak_metrics[key]
         p = protected_metrics[key]
-        if u is None or p is None:
-            print(f"{key:<32} {'n/a':<14} {'n/a':<14} n/a")
+        if u is None or w is None or p is None:
+            print(f"{key:<32} {'n/a':<14} {'n/a':<14} {'n/a':<14} n/a")
             continue
         change = f"{(p - u) * 100:+.1f}pp"
-        print(f"{key:<32} {u * 100:>6.1f}%       {p * 100:>6.1f}%       {change}")
+        print(f"{key:<32} {u * 100:>6.1f}%       {w * 100:>6.1f}%       {p * 100:>6.1f}%       {change}")
 
-    print("\nPer-scenario detail (unprotected vs AgentGuard, attack trials):")
-    print(f"{'Scenario':<10} {'Category':<28} {'Unprotected':<14} {'AgentGuard'}")
-    for u_row, p_row in zip(unprotected_attack, protected_attack):
+    print("\nPer-scenario detail (attack trials, all three conditions):")
+    print(f"{'Scenario':<10} {'Category':<28} {'Unprotected':<14} {'Weak Policy':<14} {'AgentGuard'}")
+    for u_row, w_row, p_row in zip(unprotected_attack, weak_attack, protected_attack):
         print(f"{u_row['scenario']:<10} {u_row['category']:<28} "
-              f"{str(u_row['attack_succeeded']):<14} {str(p_row['attack_succeeded'])}")
+              f"{str(u_row['attack_succeeded']):<14} {str(w_row['attack_succeeded']):<14} {str(p_row['attack_succeeded'])}")
 
     output = {
         "run_timestamp": datetime.now(timezone.utc).isoformat(),
         "n_scenarios": len(SCENARIOS),
         "methodology_note": "N=9 deterministic scripted trials, not the plan's 1,000-trial live-model design - see module docstring",
+        "negative_control_note": "weak_policy uses AgentGuard(policies=[], outcome_rules=[]) - same code path as agentguard_enabled, zero restrictions - see module docstring",
         "unprotected": {"metrics": unprotected_metrics, "attack_rows": unprotected_attack, "utility_rows": unprotected_utility},
+        "weak_policy": {"metrics": weak_metrics, "attack_rows": weak_attack, "utility_rows": weak_utility},
         "agentguard_enabled": {"metrics": protected_metrics, "attack_rows": protected_attack, "utility_rows": protected_utility},
     }
     with open("week3_experiment_results.json", "w") as f:
