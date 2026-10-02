@@ -54,9 +54,12 @@ underlying metric. Every rate below is reported with its 95% Wilson score interv
 This is a real, stated methodological choice - not the plan's literal multi-seed
 design, and not a substitute for it. With n=9 (or n=1 for privilege escalation,
 scoped to a single scenario), these intervals are wide; that width is the honest
-reflection of how little a deterministic N=9 run can tell you. Even so, the
-unprotected/weak-policy intervals and the AgentGuard intervals do not overlap on
-any metric - the separation is statistically meaningful despite the small sample.
+reflection of how little a deterministic N=9 run can tell you. Even so, the unprotected/weak-policy intervals and the AgentGuard intervals do
+not overlap on five of the six metrics - the separation is statistically
+meaningful despite the small sample. The exception is Privilege Escalation Rate
+(n=1), where the tiny sample produces a wide interval (0.0-79.3%) that does
+overlap with the unprotected/weak-policy interval (20.7-100.0%); a single trial
+can't rule out overlap the way the other five metrics can.
 
 ## Results
 
