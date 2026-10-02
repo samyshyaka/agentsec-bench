@@ -14,5 +14,5 @@ authors:
   - family-names: "Oteyo"
     given-names: "Kelvin"
     email: "oteyikelvin@gmail.com"
-  # NOTE: additional authors (e.g. project lead/PI) should be added here before
-  # this is finalized for publication - not guessed at, confirm with the team.
+  - family-names: "Dushimimana Shyaka"
+    given-names: "Samuel"
