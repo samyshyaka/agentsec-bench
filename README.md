@@ -4,6 +4,16 @@ A reproducible security evaluation framework for tool-using AI agents,
 extending beyond AgentDojo's prompt-injection focus into authorization,
 tool misuse, privilege escalation, and data exfiltration.
 
+[![DOI](https://zenodo.org/badge/1367669000.svg)](https://doi.org/10.5281/zenodo.23107265)
+
+## Citation
+
+If you use AgentSec-Bench in research, please cite the archived release:
+
+**DOI:** `10.5281/zenodo.23107266`
+
+See [`CITATION.cff`](CITATION.cff) for the full citation metadata.
+
 ## Status
 
 Working prototype. Currently supports:
