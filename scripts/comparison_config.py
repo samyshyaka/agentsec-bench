@@ -12,6 +12,7 @@ separate repository (agentdojo clone) with its own environment.
 COMPARISON_MODELS = [
     "gpt-4o-mini-2024-07-18",
     "claude-3-haiku-20240307",
+    "openai/gpt-oss-20b",  # free-tier model via Groq (OPENAI_BASE_URL in .env)
 ]
 
 # Maps an AgentSec-Bench scenario to the closest comparable AgentDojo

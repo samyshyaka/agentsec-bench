@@ -22,6 +22,12 @@ from dotenv import load_dotenv
 
 from comparison_config import COMPARISON_MODELS, SCENARIO_TO_AGENTDOJO_MAPPING
 
+# Free-tier models served via Groq's OpenAI-compatible endpoint
+# (OPENAI_BASE_URL in .env). These use the OpenAI SDK/agent class but are
+# not literally named "gpt-...", so they need an explicit allowlist here
+# rather than relying on prefix-matching alone.
+GROQ_MODELS = {"openai/gpt-oss-20b"}
+
 from agentsec_bench.core.environment import TaskEnvironment
 from agentsec_bench.core.environment_inbox import InboxEnvironment
 from agentsec_bench.tools.tools_expense import list_expenses_tool, approve_payment_tool
@@ -128,23 +134,25 @@ def check_api_keys(models):
     needed for the given models are present. Never raises - just reports.
     """
     problems = []
-    needs_openai = any(m.startswith("gpt-") for m in models)
-    needs_anthropic = any(m.startswith("claude-") for m in models)
+    openai_models = [m for m in models if m.startswith("gpt-") or m in GROQ_MODELS]
+    anthropic_models = [m for m in models if m.startswith("claude-")]
 
-    if needs_openai and not os.environ.get("OPENAI_API_KEY"):
+    if openai_models and not os.environ.get("OPENAI_API_KEY"):
         problems.append(
             "OPENAI_API_KEY is not set (required for models: "
-            + ", ".join(m for m in models if m.startswith("gpt-")) + ")"
+            + ", ".join(openai_models) + ")"
         )
-    if needs_anthropic and not os.environ.get("ANTHROPIC_API_KEY"):
+    if anthropic_models and not os.environ.get("ANTHROPIC_API_KEY"):
         problems.append(
             "ANTHROPIC_API_KEY is not set (required for models: "
-            + ", ".join(m for m in models if m.startswith("claude-")) + ")"
+            + ", ".join(anthropic_models) + ")"
         )
     return problems
 
 
 def make_agent(model):
+    if model in GROQ_MODELS:
+        return OpenAIAgent(model=model)
     if model.startswith("gpt-"):
         return OpenAIAgent(model=model)
     if model.startswith("claude-"):
