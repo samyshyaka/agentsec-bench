@@ -7,6 +7,8 @@ from ..core.types import Tool, ToolCall
 
 load_dotenv()
 
+MAX_TOOL_TURNS = 5
+
 
 def tool_to_openai_schema(tool: Tool) -> dict:
     schema = tool.parameters.model_json_schema()
@@ -30,23 +32,63 @@ class OpenAIAgent(Agent):
 
     def query(self, prompt, tools, env):
         openai_tools = [tool_to_openai_schema(t) for t in tools]
+        tools_by_name = {t.name: t for t in tools}
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant with access to tools."},
             {"role": "user", "content": prompt},
         ]
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            tools=openai_tools,
-        )
+        full_trace: list[ToolCall] = []
+        final_messages = [{"role": "assistant", "content": "(no response)"}]
 
-        msg = response.choices[0].message
-        trace = []
-        if msg.tool_calls:
+        for _ in range(MAX_TOOL_TURNS):
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=openai_tools,
+            )
+            msg = response.choices[0].message
+
+            if not msg.tool_calls:
+                final_messages = [{"role": "assistant", "content": msg.content}]
+                break
+
+            messages.append({
+                "role": "assistant",
+                "content": msg.content,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+
             for tc in msg.tool_calls:
                 args = json.loads(tc.function.arguments)
-                trace.append(ToolCall(tool_name=tc.function.name, args=args))
+                full_trace.append(ToolCall(tool_name=tc.function.name, args=args))
 
-        return [{"role": "assistant", "content": msg.content}], trace
+                tool = tools_by_name.get(tc.function.name)
+                if tool is None:
+                    result = f"Error: unknown tool '{tc.function.name}'"
+                else:
+                    try:
+                        result = tool.run(**args)
+                    except Exception as e:
+                        result = f"Error running tool '{tc.function.name}': {e}"
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": str(result),
+                })
+        else:
+            final_messages = [{"role": "assistant", "content": "(stopped: max tool turns reached)"}]
+
+        return final_messages, full_trace
